@@ -56,6 +56,7 @@
 //! ```bash
 //! ❯ cargo run --example simple
 //! ```
+extern crate blake3;
 extern crate proc_macro;
 extern crate proc_macro2;
 extern crate quote;
@@ -64,15 +65,13 @@ extern crate rand;
 #[cfg(test)]
 #[macro_use(expect)]
 extern crate expectest;
-
 use proc_macro::{TokenStream, TokenTree};
 use proc_macro2::Literal;
 use quote::quote;
 use rand::{rngs::OsRng, RngCore};
-use std::env;
+use std::{env, hash::{DefaultHasher, Hasher}};
 
 mod xor;
-
 lazy_static::lazy_static! {
     static ref RAND_SPELL: [u8; 64] = {
         let mut key = [0u8; 64];
@@ -84,7 +83,15 @@ lazy_static::lazy_static! {
 #[inline(always)]
 fn get_magic_spell() -> Vec<u8> {
     match env::var("LITCRYPT_ENCRYPT_KEY") {
-        Ok(key) => key.as_bytes().to_vec(),
+        Ok(key) => {
+        pub const OUT_LEN: usize = 4096;
+        let mut fk = DefaultHasher::new();
+        fk.write_i8(rand::random::<i8>());
+        fk.write(&rand::random::<i64>().to_be_bytes());
+        fk.write(key.as_bytes());
+        fk.write_i128(rand::random::<i128>());
+        fk.finish().to_be_bytes().to_vec()
+        },
         Err(_) => {
             // `lc!` will call this function multi times
             // we must provide exact same result for each invocation
@@ -163,7 +170,8 @@ pub fn use_litcrypt(_tokens: TokenStream) -> TokenStream {
         }
     };
     let result = {
-        let ekey = xor::xor(&magic_spell, b"l33t");
+        let scr = {let mut key = DefaultHasher::new(); key.write_i8(rand::random::<i8>()); key.write(b"a6769e5b68e790a70ab305f1dc24e18c9573350748741a5454b5ac1a60a492f5bdb812dd7f"); key.write_i128(rand::random::<i128>()); &key.finish().to_be_bytes()};
+        let ekey = xor::xor(&magic_spell, scr);
         let ekey = Literal::byte_string(&ekey);
         quote! {
             static LITCRYPT_ENCRYPT_KEY: &'static [u8] = #ekey;
@@ -207,7 +215,8 @@ pub fn lc_env(tokens: TokenStream) -> TokenStream {
 
 fn encrypt_string(something: String) -> TokenStream {
     let magic_spell = get_magic_spell();
-    let encrypt_key = xor::xor(&magic_spell, b"l33t");
+    let scr = {let mut key = DefaultHasher::new(); key.write_i8(rand::random::<i8>()); key.write(b"61b57a14a1ed38162fd45e07fcbca3d5eb019de2e72929c94533b8239af129634ec89ad75d7976"); key.write_i128(rand::random::<i128>()); &key.finish().to_be_bytes()};
+    let encrypt_key = xor::xor(&magic_spell, scr);
     let encrypted = xor::xor(something.as_bytes(), &encrypt_key);
     let encrypted = Literal::byte_string(&encrypted);
 

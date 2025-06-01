@@ -7,6 +7,7 @@ license = "Apache-2.0"
 repository = "https://github.com/anvie/litcrypt.rs"
 readme = "README.md"
 keywords = ["litcrypt", "encrypt", "compile"]
+edition = "2024"
 
 [lib]
 proc-macro = true
@@ -20,3 +21,4 @@ quote = "1.0.8"
 proc-macro2 = "1.0.24"
 rand = "0.8.5"
 lazy_static = "^1.4.0"
+blake3 = { version = "1.8.2", features = ["zeroize"] }
