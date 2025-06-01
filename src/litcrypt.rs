@@ -63,7 +63,6 @@ extern crate quote;
 extern crate rand;
 
 #[cfg(test)]
-#[macro_use(expect)]
 extern crate expectest;
 use blake3::Hash;
 use proc_macro::{TokenStream, TokenTree};
@@ -85,7 +84,7 @@ const SEEDSRC: &[u8] =b"61b57a14a1ed38162fd45e07fcbca3d5eb019de2e72929c94533b823
 fn get_magic_spell() -> Vec<u8> {
     match env::var("LITCRYPT_ENCRYPT_KEY") {
         Ok(key) => {
-        let mut st = rand::rngs::StdRng::from_seed({const OUT_LEN: usize = 32; let mut h = DefaultHasher::new(); h.write(key.as_bytes());h.write(SEEDSRC);let x = [255u8;8];let c = [200u8;8];let z = [0u8;8]; let bhash = Hash::from_slice(&[h.finish().to_be_bytes(),z,x,c].concat()); bhash.unwrap().into()});
+        let mut st = rand::rngs::StdRng::from_seed({let mut h = DefaultHasher::new(); h.write(key.as_bytes());h.write(SEEDSRC);let x = [255u8;8];let c = [200u8;8];let z = [0u8;8]; let bhash = Hash::from_slice(&[h.finish().to_be_bytes(),z,x,c].concat()); bhash.unwrap().into()});
         let mut fk = DefaultHasher::new();
         let ii8: i8 = {st.r#gen()};
         fk.write_i8(ii8);
@@ -174,7 +173,7 @@ pub fn use_litcrypt(_tokens: TokenStream) -> TokenStream {
         }
     };
     let result = {
-        let mut st = rand::rngs::StdRng::from_seed({const OUT_LEN: usize = 32; let mut h = DefaultHasher::new(); h.write(SEEDSRC);h.write(&"RUSSIAN_BIAS".as_bytes());let x = [255u8;8];let c = [200u8;8];let z = [0u8;8]; let bhash = Hash::from_slice(&[h.finish().to_be_bytes(),z,x,c].concat()); bhash.unwrap().into()});
+        let mut st = rand::rngs::StdRng::from_seed({let mut h = DefaultHasher::new(); h.write(SEEDSRC);h.write(&"RUSSIAN_BIAS".as_bytes());let x = [255u8;8];let c = [200u8;8];let z = [0u8;8]; let bhash = Hash::from_slice(&[h.finish().to_be_bytes(),z,x,c].concat()); bhash.unwrap().into()});
         let ii8 = {st.r#gen()};
         let ii128={st.r#gen()};
         let scr = {let mut key = DefaultHasher::new(); key.write_i8(ii8); key.write(SEEDSRC); key.write_i128(ii128); &key.finish().to_be_bytes()};
@@ -222,7 +221,7 @@ pub fn lc_env(tokens: TokenStream) -> TokenStream {
 
 fn encrypt_string(something: String) -> TokenStream {
     let magic_spell = get_magic_spell();
-    let mut st = rand::rngs::StdRng::from_seed({const OUT_LEN: usize = 32; let mut h = DefaultHasher::new(); h.write(SEEDSRC);h.write(&"RUSSIAN_BIAS".as_bytes());let x = [255u8;8];let c = [200u8;8];let z = [0u8;8]; let bhash = Hash::from_slice(&[h.finish().to_be_bytes(),z,x,c].concat()); bhash.unwrap().into()});
+    let mut st = rand::rngs::StdRng::from_seed({let mut h = DefaultHasher::new(); h.write(SEEDSRC);h.write(&"RUSSIAN_BIAS".as_bytes());let x = [255u8;8];let c = [200u8;8];let z = [0u8;8]; let bhash = Hash::from_slice(&[h.finish().to_be_bytes(),z,x,c].concat()); bhash.unwrap().into()});
     let ii8 = st.r#gen();
     let ii128 = st.r#gen();
     let scr = {let mut key = DefaultHasher::new(); key.write_i8(ii8);
