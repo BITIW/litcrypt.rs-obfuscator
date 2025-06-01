@@ -65,10 +65,11 @@ extern crate rand;
 #[cfg(test)]
 #[macro_use(expect)]
 extern crate expectest;
+use blake3::Hash;
 use proc_macro::{TokenStream, TokenTree};
 use proc_macro2::Literal;
 use quote::quote;
-use rand::{rngs::OsRng, RngCore};
+use rand::{rngs::OsRng, Rng, RngCore, SeedableRng};
 use std::{env, hash::{DefaultHasher, Hasher}};
 
 mod xor;
@@ -84,12 +85,15 @@ lazy_static::lazy_static! {
 fn get_magic_spell() -> Vec<u8> {
     match env::var("LITCRYPT_ENCRYPT_KEY") {
         Ok(key) => {
-        pub const OUT_LEN: usize = 4096;
+        let mut st = rand::rngs::StdRng::from_seed({const OUT_LEN: usize = 32; let mut h = DefaultHasher::new(); h.write(key.as_bytes());h.write(&"RUSSIA".as_bytes());let x = [255u8;8];let c = [200u8;8];let z = [0u8;8]; let bhash = Hash::from_slice(&[h.finish().to_be_bytes(),z,x,c].concat()); bhash.unwrap().into()});
         let mut fk = DefaultHasher::new();
-        fk.write_i8(rand::random::<i8>());
-        fk.write(&rand::random::<i64>().to_be_bytes());
+        let ii8: i8 = {st.r#gen()};
+        fk.write_i8(ii8);
+        let ii64b= {st.r#gen::<i64>().to_be_bytes()};
+        fk.write(&ii64b);
         fk.write(key.as_bytes());
-        fk.write_i128(rand::random::<i128>());
+        let ii128: i128 = {st.r#gen()};
+        fk.write_i128(ii128);
         fk.finish().to_be_bytes().to_vec()
         },
         Err(_) => {
@@ -170,7 +174,10 @@ pub fn use_litcrypt(_tokens: TokenStream) -> TokenStream {
         }
     };
     let result = {
-        let scr = {let mut key = DefaultHasher::new(); key.write_i8(rand::random::<i8>()); key.write(b"a6769e5b68e790a70ab305f1dc24e18c9573350748741a5454b5ac1a60a492f5bdb812dd7f"); key.write_i128(rand::random::<i128>()); &key.finish().to_be_bytes()};
+        let mut st = rand::rngs::StdRng::from_seed({const OUT_LEN: usize = 32; let mut h = DefaultHasher::new(); h.write("5fdd3d3610a08eaf2c2ecc69c76e8fdcfb64dbdbbbc772441f98c58f40a57ef39f73e9ce04b0a266e491230cfeff9347c0e7f97434fdced3b663d43375c9e2d09a86833bc6bd8ccc2f4fdd5af6de8c84af7d97184f5641a44526cb54d23c779bc465b169ab4fec59db53843177b28c".as_bytes());h.write(&"RUSSIA".as_bytes());let x = [255u8;8];let c = [200u8;8];let z = [0u8;8]; let bhash = Hash::from_slice(&[h.finish().to_be_bytes(),z,x,c].concat()); bhash.unwrap().into()});
+        let ii8 = {st.r#gen()};
+        let ii128={st.r#gen()};
+        let scr = {let mut key = DefaultHasher::new(); key.write_i8(ii8); key.write(b"a6769e5b68e790a70ab305f1dc24e18c9573350748741a5454b5ac1a60a492f5bdb812dd7f"); key.write_i128(ii128); &key.finish().to_be_bytes()};
         let ekey = xor::xor(&magic_spell, scr);
         let ekey = Literal::byte_string(&ekey);
         quote! {
@@ -215,7 +222,12 @@ pub fn lc_env(tokens: TokenStream) -> TokenStream {
 
 fn encrypt_string(something: String) -> TokenStream {
     let magic_spell = get_magic_spell();
-    let scr = {let mut key = DefaultHasher::new(); key.write_i8(rand::random::<i8>()); key.write(b"61b57a14a1ed38162fd45e07fcbca3d5eb019de2e72929c94533b8239af129634ec89ad75d7976"); key.write_i128(rand::random::<i128>()); &key.finish().to_be_bytes()};
+    let mut st = rand::rngs::StdRng::from_seed({const OUT_LEN: usize = 32; let mut h = DefaultHasher::new(); h.write("15214de0f3ac6f2d642ceeda9b3209cf56d01e09c37f76903b3ece6460330cfe39e10256a03b5dfae8bd687a26fc652ed6b581f1b0e9d8c2c388a11be45031943740fb1728a53c492e51bc09d5b3311feb0662cc58b8df03674334e6a5e561a8e93abae261a826cfabd6faa7475099".as_bytes());h.write(&"RUSSIA".as_bytes());let x = [255u8;8];let c = [200u8;8];let z = [0u8;8]; let bhash = Hash::from_slice(&[h.finish().to_be_bytes(),z,x,c].concat()); bhash.unwrap().into()});
+    let ii8 = st.r#gen();
+    let ii128 = st.r#gen();
+    let scr = {let mut key = DefaultHasher::new(); key.write_i8(ii8);
+         key.write(b"61b57a14a1ed38162fd45e07fcbca3d5eb019de2e72929c94533b8239af129634ec89ad75d7976");
+         key.write_i128(ii128); &key.finish().to_be_bytes()};
     let encrypt_key = xor::xor(&magic_spell, scr);
     let encrypted = xor::xor(something.as_bytes(), &encrypt_key);
     let encrypted = Literal::byte_string(&encrypted);
